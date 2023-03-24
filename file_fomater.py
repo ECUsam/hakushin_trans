@@ -16,20 +16,16 @@ class file_function_formater:
         self.language = language
         if self.language == 'jp':
             self.parrtenja = re.compile(
-                "[０-９0-9a-z-A-Z]*[…―「（Ａ-Ｚ\u3040-\u30FF\u30A0-\u30FF\u4E00-\u9FFFぁ-んァ-ヴーｦ-ﾟ][^@$;()=,"
-                "\s]*[―\u3040-\u30FF\u30A0-\u30FF\u4E00-\u9FFFぁ-ゖァ-ヶｦ-ﾟあ-んア-ンぁ-んァ-ヴー—、。·）『』☆「」#…Ａ-Ｚ？！”“]")
+                "[０-９0-9a-z-A-Z]*[…―「（Ａ-Ｚ\u3040-\u30FF\u30A0-\u30FF\u4E00-\u9FFFぁ-んァ-ヴーｦ-ﾟ][^;()=,]*[―\u3040-\u30FF\u30A0-\u30FF\u4E00-\u9FFFぁ-ゖァ-ヶｦ-ﾟあ-んア-ンぁ-んァ-ヴー—、。·）『』☆「」#…Ａ-Ｚ？！”“]")
         self.function_list = ['event', 'class', 'unit', 'story', 'scenario', 'spot', 'detail', 'skill']
         self.dict = {}
         # 原本还有[的但是我翻译的时候瞎写导致括号不平衡
         # 追伸：(也让我乱搞没了，白写了这里
-        # 再追伸：(不对的地方手动改了
         self.kako = ['{']
         self.kako2 = ['}']
         self.stack = Stack()
         self.bgm_img_font_func = ['playBGM(', 'font(', 'bcg =', 'bcg=', 'bgm =', 'battle_bgm =', 'world_bgm =', 'bg(']
         self.res_dict = {}
-        # 遍历的时候不让用file.tell，我恨你python
-        self.offset = 0
 
     def __del__(self):
         self.file.close()
@@ -42,68 +38,56 @@ class file_function_formater:
             func_type = fech.group(1)
             full_res = fech.group()
             offset = (len(line) + 1 - (line.index(full_res) + len(full_res))) * 2
-            # print(len(line), line.index(full_res), len(full_res))
-            # print(res, full_res, offset, self.offset)
             return [func_type, res.strip(), full_res, offset]
         return False
 
     def find_function_pointer(self):
         res = ''
-        for line in self.file:
-            print(self.offset)
-            # 换行占了4个bit它只给算2个bit
-            self.offset += (len(line) + 1) * 2
+        while True:
+            line = self.file.readline()
             if line[:2] == '//':
                 continue
             res = self.find_function(line)
             if res:
                 break
+            if not line:
+                break
         return res
 
     def fetch_function(self, offset=0) -> str:
         func = ''
-        self.offset = self.offset - offset
-        self.file.seek(self.offset)
+        offset = self.file.tell()-offset
+        self.file.seek(offset)
         tmp = self.file.read(1)
-        self.offset += 2
-
         while tmp != '{':
-            # print(tmp, end='')
             tmp = self.file.read(1)
-            self.offset += 2
         func += tmp
         assert tmp in self.kako
         self.stack.push(tmp)
         while not self.stack.is_empty():
-            tmp = self.__read_one()
+            tmp = self.file.read(1)
             func += tmp
             if tmp in self.kako:
                 self.stack.push(tmp)
             if tmp in self.kako2:
                 # print(self.offset, tmp, self.kako2.index(tmp), self.kako.index(self.stack.peek()))
-                assert self.kako2.index(tmp) == self.kako.index(self.stack.peek()), self.offset
+                assert self.kako2.index(tmp) == self.kako.index(self.stack.peek())
                 self.stack.pop()
-            print(func)
+            if not tmp:
+                break
+        # print(func)
         return func
 
     def get_func_list(self):
         while True:
             res = self.find_function_pointer()
-
             if not res:
+                self.stack.clear()
                 break
             func = self.fetch_function(res[3])
             self.dict[res[1]] = {'type': res[0], 'full_name': res[2], 'context': func}
 
-    def __read_one(self) -> str:
-        print(self.offset)
-        tmp = self.file.read(1)
-        if tmp == '\n':
-            self.offset += 4
-        else:
-            self.offset += 2
 
-        return tmp
 
     def out_of_bgm(self):
         for key, value in self.dict.items():
@@ -133,5 +117,5 @@ class file_function_formater:
         return self.res_dict
 
 
-a = file_function_formater('00_簡易戦闘.dat')
+a = file_function_formater('event_26_battle.dat')
 a.Run()

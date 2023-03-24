@@ -33,6 +33,9 @@ class Stack(object):
         # 返回栈的大小
         return len(self.stack)
 
+    def clear(self):
+        self.stack = []
+
 
 def jinzhi(n, base):
     stack = Stack()
