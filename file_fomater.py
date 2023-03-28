@@ -1,3 +1,4 @@
+import os.path
 import re
 import logging
 from io import StringIO
@@ -9,8 +10,9 @@ logging.basicConfig(level=logging.DEBUG, filename='myapp.log', filemode='w',
 
 class file_function_formater:
     def __init__(self, filepath: str, language='jp'):
+        self.filepath = filepath
         try:
-            self.file = open(filepath, 'r', encoding='utf16', errors='ignore')
+            self.file = open(self.filepath, 'r', encoding='utf16', errors='ignore')
         except Exception:
             print('打开文件失败')
         self.language = language
@@ -26,9 +28,18 @@ class file_function_formater:
         self.stack = Stack()
         self.bgm_img_font_func = ['playBGM(', 'font(', 'bcg =', 'bcg=', 'bgm =', 'battle_bgm =', 'world_bgm =', 'bg(']
         self.res_dict = {}
+        self.repath = ''
+        self.filename = ''
+        self.getRePath()
 
     def __del__(self):
         self.file.close()
+
+    def getRePath(self):
+        match = re.search(r'a_default\\(.*)', self.filepath)
+        if match:
+            self.repath = match.group(1)
+        self.filename = os.path.basename(self.filepath)
 
     def find_function(self, line: str):
         func_parten = re.compile("(" + '|'.join(self.function_list) + ")" + '\s+([^{]+)')
@@ -56,7 +67,7 @@ class file_function_formater:
 
     def fetch_function(self, offset=0) -> str:
         func = ''
-        offset = self.file.tell()-offset
+        offset = self.file.tell() - offset
         self.file.seek(offset)
         tmp = self.file.read(1)
         while tmp != '{':
@@ -71,7 +82,7 @@ class file_function_formater:
                 self.stack.push(tmp)
             if tmp in self.kako2:
                 # print(self.offset, tmp, self.kako2.index(tmp), self.kako.index(self.stack.peek()))
-                assert self.kako2.index(tmp) == self.kako.index(self.stack.peek())
+                assert self.kako2.index(tmp) == self.kako.index(self.stack.peek()), '括号不匹配'
                 self.stack.pop()
             if not tmp:
                 break
@@ -85,9 +96,8 @@ class file_function_formater:
                 self.stack.clear()
                 break
             func = self.fetch_function(res[3])
-            self.dict[res[1]] = {'type': res[0], 'full_name': res[2], 'context': func}
-
-
+            self.dict[res[1]] = {'type': res[0], 'full_name': res[2],
+                                 'filename': self.filename, 'repath': self.repath, 'context': func}
 
     def out_of_bgm(self):
         for key, value in self.dict.items():
@@ -115,6 +125,11 @@ class file_function_formater:
         self.out_of_bgm()
         self.turn_to_text()
         return self.res_dict
+
+    def for_lesson(self, txt):
+        f = StringIO(txt)
+        self.file = f
+        self.get_func_list()
 
 
 a = file_function_formater('event_26_battle.dat')
