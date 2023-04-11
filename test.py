@@ -1,35 +1,49 @@
 import json
-from openpyxl import Workbook
 from langdetect import detect
 
-
-# 创建一个Workbook对象
-workbook = Workbook()
-
-# 获取当前活动的Worksheet对象
-worksheet = workbook.active
+from null import has_kana
 
 with open('data.json', 'r') as f:
     data = json.load(f)
 with open('data2.json', 'r') as f:
     data2 = json.load(f)
 
-data_test = data['po23_ed_C2']['context']
-data_test2 = data2['po23_ed_C2']['context']
+num = 0
+len_txt = 0
+for da in data2:
+    if da not in data:
+        num += 1
+        for txt in data2[da]['context']: len_txt+=len(txt)
+        print(da, data2[da]['context'])
+print(num)
+print(len_txt)
+all_len = 0
+for da in data2:
+    for txt in data2[da]["context"]: all_len+=len(txt)
+print('全长：',all_len)
 
-print(len(data_test))
-print(len(data_test2))
-print(data['po23_ed_C2']['context'])
-print(data2['po23_ed_C2']['context'])
+num = 0
+fanyi = 0
+no_fanyi = 0
+# for da in data:
+#     for txt in data[da]["context"]:
+#         num += 1
+#         try:
+#             yuyan = detect(txt)
+#         except Exception:
+#             yuyan = 'ja'
+#         if yuyan == 'zh-cn':
+#             fanyi += len(txt)
+#         else:
+#             no_fanyi += len(txt)
+for da in data:
+    for txt in data[da]["context"]:
+        num += 1
+        if has_kana(txt):
+            no_fanyi += len(txt)
+        else:
+            fanyi += len(txt)
 
-# 写入列表1
-for i, value in enumerate(data_test, start=1):
-    worksheet.cell(row=i, column=1, value=value)
-    worksheet.cell(row=i, column=3, value=detect(value))
-# 写入列表2
-for i, value in enumerate(data_test2, start=1):
-    worksheet.cell(row=i, column=2, value=value)
-
-
-# 保存文件
-workbook.save('output.xlsx')
+print("总条数：", num)
+print('翻译：',fanyi)
+print('未翻译', no_fanyi)
