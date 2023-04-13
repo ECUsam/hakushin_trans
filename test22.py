@@ -6,9 +6,9 @@ workbook = Workbook()
 # 获取当前活动的Worksheet对象
 worksheet = workbook.active
 
-with open('naiya.json', 'r') as f:
+with open('data_.json', 'r', encoding='utf16') as f:
     data = json.load(f)
-with open('data2.json', 'r') as f:
+with open('data2.json', 'r', encoding='utf16') as f:
     data2 = json.load(f)
 
 num_same = 0
@@ -35,6 +35,6 @@ for key in data2:
                 worksheet.cell(row=i + 2, column=row_time * num_not_same - 1, value=value)
                 # workbook.save('output.xlsx')
 
-workbook.save('naiya.xlsx')
+workbook.save('data_.xlsx')
 
 print(num_same, num_not_same)

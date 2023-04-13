@@ -19,6 +19,7 @@ class replacer(file_function_formater):
             print(self.dict[da]['context'])
 
     def replace(self):
+        print(self.dict)
         for key in self.dict:
             if key not in self.trans:
                 continue
@@ -49,4 +50,4 @@ def all_replace(foler_path):
             n.replace()
 
 
-all_replace('script_1')
+# all_replace('script_1')

@@ -1,8 +1,8 @@
 import json
 
-with open('data.json', 'r') as f:
+with open('data_.json', 'r', encoding='utf16') as f:
     data = json.load(f)
-with open('data2.json', 'r') as f:
+with open('data2.json', 'r', encoding='utf16') as f:
     data2 = json.load(f)
 
 for da in data2:
@@ -13,5 +13,5 @@ for da in data2:
     else:
         data2[da]['iftrans'] = False
 
-with open('raw_trans.json', 'w', encoding='utf16') as f:
+with open('raw_trans_2.json', 'w', encoding='utf16') as f:
     json.dump(data2, f, indent=4, ensure_ascii=False)

@@ -2,7 +2,7 @@ import openpyxl
 from openpyxl.utils import cell
 import json
 
-workbook = openpyxl.load_workbook('naiya.xlsx')
+workbook = openpyxl.load_workbook('output - 副本 (2).xlsx')
 worksheet = workbook['Sheet']
 num = 1
 
@@ -17,9 +17,9 @@ def read_text(column_number: int):
     return name, res
 
 
-with open('naiya.json', 'r') as f:
+with open('data.json', 'r', encoding='utf16') as f:
     data = json.load(f)
-with open('data2.json', 'r') as f:
+with open('data2.json', 'r', encoding='utf16') as f:
     data2 = json.load(f)
 
 while worksheet.cell(row=1, column=num).value is not None:
@@ -34,5 +34,5 @@ while worksheet.cell(row=1, column=num).value is not None:
     print(res)
     num += 3
 
-with open('naiya.json', 'w') as f:
-    json.dump(data, f, indent=4)
+with open('data_.json', 'w', encoding='utf16') as f:
+    json.dump(data, f, indent=4, ensure_ascii=False)

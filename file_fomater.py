@@ -20,7 +20,8 @@ class file_function_formater:
         if self.language == 'jp':
             self.parrtenja = re.compile(
                 "[０-９0-9a-z-A-Z]*[…―「（Ａ-Ｚ\u3040-\u30FF\u30A0-\u30FF\u4E00-\u9FFFぁ-んァ-ヴーｦ-ﾟ][^;()=,]*[―\u3040-\u30FF\u30A0-\u30FF\u4E00-\u9FFFぁ-ゖァ-ヶｦ-ﾟあ-んア-ンぁ-んァ-ヴー—、。·）『』☆「」#…Ａ-Ｚ？！”“]")
-        self.function_list = ['event', 'class', 'unit', 'story', 'scenario', 'spot', 'detail', 'skill', 'race', 'power', 'movetype', 'voice']
+        self.function_list = ['event', 'class', 'unit', 'story', 'scenario', 'spot', 'detail', 'skill', 'race', 'power',
+                              'movetype', 'voice']
         self.dict = {}
         # 原本还有[的但是我翻译的时候瞎写导致括号不平衡
         # 追伸：(也让我乱搞没了，白写了这里
@@ -28,11 +29,12 @@ class file_function_formater:
         self.kako2 = ['}']
         self.stack = Stack()
         self.bgm_img_font_func = ['playBGM(', 'font(', 'bcg =', 'bcg=', 'bgm =', 'battle_bgm =', 'world_bgm =', 'bg(',
-                                  'loopBGM(']
+                                  'loopBGM(', 'begin_text']
         self.res_dict = {}
         self.repath = ''
         self.filename = ''
         self.getRePath()
+        self.zhushi = False
 
     def __del__(self):
         self.file.close()
@@ -44,7 +46,7 @@ class file_function_formater:
         self.filename = os.path.basename(self.filepath)
 
     def find_function(self, line: str):
-        func_parten = re.compile("\s*?" +"(" + '|'.join(self.function_list) + ")" + '\s+([^{]+)')
+        func_parten = re.compile("\s*?" + "(" + '|'.join(self.function_list) + ")" + '\s+([^{]+)')
         if re.match(func_parten, line):
             fech = re.match(func_parten, line)
             res = fech.group(2).split(':')[0]
@@ -58,7 +60,12 @@ class file_function_formater:
         res = ''
         while True:
             line = self.file.readline()
-            if line[:2] == '//':
+            if self.zhushi and r'*/' in line:
+                self.zhushi = False
+            if line[:2] == '//' or (self.zhushi and line):
+                continue
+            if r'/*' in line:
+                self.zhushi = True
                 continue
             res = self.find_function(line)
             if res:
@@ -83,7 +90,6 @@ class file_function_formater:
             if tmp in self.kako:
                 self.stack.push(tmp)
             if tmp in self.kako2:
-                # print(self.offset, tmp, self.kako2.index(tmp), self.kako.index(self.stack.peek()))
                 assert self.kako2.index(tmp) == self.kako.index(self.stack.peek()), '括号不匹配'
                 self.stack.pop()
             if not tmp:
@@ -98,10 +104,18 @@ class file_function_formater:
                 self.stack.clear()
                 break
             func = self.fetch_function(res[3])
+
+            if res[0] == 'detail':
+                each_detail = re.compile('([A-Za-z_0-9]+).?=([^=()]*?);')
+                detail = re.findall(each_detail, func)
+                for de in detail:
+                    self.dict['detail#_' + de[0]] = {'type': res[0], 'full_name': res[2],
+                                                    'filename': self.filename, 'repath': self.repath, 'context': de[1],
+                                                    'special': True}
+                continue
             self.dict[res[1]] = {'type': res[0], 'full_name': res[2],
-                                 'filename': self.filename, 'repath': self.repath, 'context': func}
-
-
+                                 'filename': self.filename, 'repath': self.repath, 'context': func,
+                                 'special': False}
 
     def out_of_bgm(self):
         for key, value in self.dict.items():
@@ -118,11 +132,13 @@ class file_function_formater:
 
     def turn_to_text(self):
         for key, value in self.dict.items():
-            res = re.findall(self.parrtenja, value["context"])
-            if res:
-                value["context"] = res
+            if not value['special']:
+                res = re.findall(self.parrtenja, value["context"])
+                if res:
+                    value["context"] = res
+                    self.res_dict[key] = value
+            else:
                 self.res_dict[key] = value
-                # print(key, value)
 
     def Run(self):
         self.get_func_list()
@@ -135,6 +151,5 @@ class file_function_formater:
         self.file = f
         self.get_func_list()
 
-
-# a = file_function_formater('serihu.dat')
+# a = file_function_formater('spot_detail.dat')
 # print(a.Run())
