@@ -13,5 +13,5 @@ for da in data2:
     else:
         data2[da]['iftrans'] = False
 
-with open('raw_trans_2.json', 'w', encoding='utf16') as f:
+with open('raw_trans_4.json', 'w', encoding='utf16') as f:
     json.dump(data2, f, indent=4, ensure_ascii=False)

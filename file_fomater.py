@@ -21,7 +21,7 @@ class file_function_formater:
             self.parrtenja = re.compile(
                 "[０-９0-9a-z-A-Z]*[…―「（Ａ-Ｚ\u3040-\u30FF\u30A0-\u30FF\u4E00-\u9FFFぁ-んァ-ヴーｦ-ﾟ][^;()=,]*[―\u3040-\u30FF\u30A0-\u30FF\u4E00-\u9FFFぁ-ゖァ-ヶｦ-ﾟあ-んア-ンぁ-んァ-ヴー—、。·）『』☆「」#…Ａ-Ｚ？！”“]")
         self.function_list = ['event', 'class', 'unit', 'story', 'scenario', 'spot', 'detail', 'skill', 'race', 'power',
-                              'movetype', 'voice']
+                              'movetype', 'voice', 'world']
         self.dict = {}
         # 原本还有[的但是我翻译的时候瞎写导致括号不平衡
         # 追伸：(也让我乱搞没了，白写了这里
@@ -106,7 +106,7 @@ class file_function_formater:
             func = self.fetch_function(res[3])
 
             if res[0] == 'detail':
-                each_detail = re.compile('([A-Za-z_0-9]+).?=([^=()]*?);')
+                each_detail = re.compile('([A-Za-z_0-9]+).?=([\s\S]*?);')
                 detail = re.findall(each_detail, func)
                 for de in detail:
                     self.dict['detail#_' + de[0]] = {'type': res[0], 'full_name': res[2],
@@ -138,6 +138,7 @@ class file_function_formater:
                     value["context"] = res
                     self.res_dict[key] = value
             else:
+                value['context'] = [value['context']]
                 self.res_dict[key] = value
 
     def Run(self):
@@ -151,5 +152,5 @@ class file_function_formater:
         self.file = f
         self.get_func_list()
 
-# a = file_function_formater('spot_detail.dat')
-# print(a.Run())
+a = file_function_formater('ev_rnd.dat')
+print(a.Run())
