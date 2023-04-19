@@ -9,3 +9,5 @@ if index == -1:
 else:
     offset = len(contents[:index].encode('utf16'))
     print(f'The search string was found at offset {offset}.')
+
+print('tset')
